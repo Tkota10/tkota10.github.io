@@ -1,0 +1,57 @@
+body, html {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    font-family: "pliego", Helvetica, sans-serif;
+    font-weight: 300;
+    font-size: 14px;
+    color: #024102;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    font-weight: 700;
+}
+
+a:hover {
+    color: #dfc686;
+}
+
+.center {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.padded-content {
+    max-width: 800px;
+    padding: 10vh 10vw;
+}
+
+.questions .description {
+    font-size: 12px;
+}
+
+.questions li {
+    margin: 10px 0;
+}
+
+.questions .download {
+    text-align: center;
+    margin-top: 80px;
+}
+
+.questions .download a {
+    font-size: 18px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+@media (max-width: 600px) {
+    .padded-content {
+        padding: 5vh 10vw;
+    }
+}
