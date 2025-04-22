@@ -1,6 +1,6 @@
 # Personal Website
 
-A simple, elegant personal website with dark green highlights.
+A simple, elegant personal website.
 
 ## Features
 - Clean, minimalist design
