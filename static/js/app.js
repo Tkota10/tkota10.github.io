@@ -45,6 +45,11 @@
     });
   });
 
+  document.getElementById("site-name").addEventListener("click", function () {
+    setTab("about", true);
+    window.scrollTo({ top: 0 });
+  });
+
   /* ---------------- writing ---------------- */
 
   var posts = window.POSTS || [];

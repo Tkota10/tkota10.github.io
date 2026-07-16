@@ -6,7 +6,7 @@
   --font-hand: "Shantell Sans", cursive;
   --font-serif: "Source Serif 4", Georgia, serif;
 
-  --utilbar-h: 3.5rem;
+  --utilbar-h: 4.25rem;
   --card-max-w: 900px;
   --card-radius: 22px;
 }
@@ -131,9 +131,14 @@ a:hover {
 }
 
 .site-name {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
   font-family: var(--font-hand);
   font-weight: 700;
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   letter-spacing: 0.01em;
 }
 
@@ -141,8 +146,8 @@ a:hover {
   border: 1px solid var(--divider);
   background: transparent;
   color: var(--text-muted);
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.6rem;
+  height: 2.6rem;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -165,7 +170,7 @@ a:hover {
 .socials {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
+  gap: 1.5rem;
 }
 
 .socials a {
