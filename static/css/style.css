@@ -306,8 +306,11 @@ body.reading .tab-row {
     grid-template-columns: 1fr;
   }
 
+  /* Photo moves above the bio and shrinks so it doesn't dominate */
   .about-photo {
-    max-width: 420px;
+    order: -1;
+    max-width: min(260px, 70vw);
+    margin: 0 auto;
   }
 }
 
@@ -396,17 +399,18 @@ body.reading .tab-row {
   right: 1.1rem;
   background: transparent;
   border: none;
-  color: var(--text-muted);
+  font-size: 1.35rem;
+  line-height: 1;
   cursor: pointer;
   padding: 0.4rem;
   border-radius: 50%;
   display: inline-flex;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .article-close:hover {
-  color: var(--text);
   background: var(--hover-tint);
+  transform: scale(1.15);
 }
 
 .article-header {
