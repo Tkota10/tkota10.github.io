@@ -563,6 +563,27 @@ body.reading .tab-row {
   margin: 0 auto;
 }
 
+.article-section-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  line-height: 1.35;
+  margin: 2.2rem 0 0.85rem;
+}
+
+.article-list {
+  margin: 1rem 0 1.25rem;
+  padding-left: 1.35rem;
+}
+
+.article-list li + li {
+  margin-top: 0.55rem;
+}
+
+.article-body p + .article-section-title,
+.article-list + .article-section-title {
+  margin-top: 2.5rem;
+}
+
 .article-back-wrap {
   text-align: center;
   margin: 3rem 0 0.5rem;

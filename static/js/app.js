@@ -104,8 +104,19 @@
 
   var posts = window.POSTS || [];
 
+  function blockText(block) {
+    if (typeof block === "string") return block;
+    if (!block || typeof block !== "object") return "";
+    if (Array.isArray(block.items)) return block.items.join(" ");
+    return block.text || "";
+  }
+
+  function postText(post) {
+    return (post.body || []).map(blockText).join(" ");
+  }
+
   function readMinutes(post) {
-    var words = post.body.join(" ").split(/\s+/).filter(Boolean).length;
+    var words = postText(post).split(/\s+/).filter(Boolean).length;
     return Math.max(1, Math.round(words / WORDS_PER_MINUTE));
   }
 
@@ -123,6 +134,31 @@
     if (className) node.className = className;
     if (text) node.textContent = text;
     return node;
+  }
+
+  function appendArticleBlock(container, block) {
+    if (typeof block === "string") {
+      container.appendChild(el("p", null, block));
+      return;
+    }
+
+    if (!block || typeof block !== "object") return;
+
+    if (block.type === "heading") {
+      container.appendChild(el("h2", "article-section-title", block.text));
+      return;
+    }
+
+    if (block.type === "list" && Array.isArray(block.items)) {
+      var list = el("ul", "article-list");
+      block.items.forEach(function (item) {
+        list.appendChild(el("li", null, item));
+      });
+      container.appendChild(list);
+      return;
+    }
+
+    container.appendChild(el("p", null, block.text || ""));
   }
 
   function renderList() {
@@ -171,8 +207,8 @@
     articleContent.appendChild(el("hr", "article-divider"));
 
     var body = el("div", "article-body");
-    post.body.forEach(function (paragraph) {
-      body.appendChild(el("p", null, paragraph));
+    post.body.forEach(function (block) {
+      appendArticleBlock(body, block);
     });
     articleContent.appendChild(body);
 
