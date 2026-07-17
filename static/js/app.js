@@ -11,6 +11,56 @@
   var articleContent = document.getElementById("article-content");
   var photoGrid = document.getElementById("photo-grid");
 
+  /* ---------------- bunny cursor ---------------- */
+
+  function initBunnyCursor() {
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+
+    var root = document.documentElement;
+    var bunny = document.createElement("span");
+    bunny.className = "bunny-cursor";
+    bunny.setAttribute("aria-hidden", "true");
+    bunny.textContent = "🐇";
+    document.body.appendChild(bunny);
+
+    var interactiveCursorTargets =
+      "button, a, input, select, textarea, [role='button']";
+
+    function hideBunny() {
+      bunny.classList.remove("visible");
+      root.classList.remove("bunny-cursor-active");
+    }
+
+    document.addEventListener("pointermove", function (event) {
+      if (event.pointerType !== "mouse") return;
+
+      var overInteractive = event.target.closest(interactiveCursorTargets);
+      var overCard = event.target.closest(".content-card");
+      var overArticleClose = event.target.closest("#article-close");
+      var cursorEmoji = "🐇";
+      if (overCard) cursorEmoji = null;
+      if (overInteractive) cursorEmoji = "🕳️";
+      if (overArticleClose) cursorEmoji = null;
+      var showCursor = Boolean(cursorEmoji);
+
+      bunny.classList.toggle("visible", showCursor);
+      root.classList.toggle("bunny-cursor-active", showCursor);
+
+      if (showCursor) {
+        bunny.textContent = cursorEmoji;
+        bunny.style.setProperty("--bunny-x", event.clientX + "px");
+        bunny.style.setProperty("--bunny-y", event.clientY + "px");
+      }
+    });
+
+    document.addEventListener("pointerout", function (event) {
+      if (!event.relatedTarget) hideBunny();
+    });
+    window.addEventListener("blur", hideBunny);
+  }
+
+  initBunnyCursor();
+
   /* ---------------- theme ---------------- */
 
   document.getElementById("theme-toggle").addEventListener("click", function () {
