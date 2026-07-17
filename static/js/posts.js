@@ -1,5 +1,5 @@
 // Blog posts, newest first. To add a post, append an object here:
-//   title  — shown in the hand-lettered font
+//   title  — shown in the display font
 //   teaser — one-line subtitle in the list view
 //   date   — ISO string (YYYY-MM-DD), formatted for display automatically
 //   body   — array of paragraphs (plain text)
