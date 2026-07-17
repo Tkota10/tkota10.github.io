@@ -1,4 +1,4 @@
-name: Regenerate photos manifest
+name: Optimize photos and regenerate manifest
 
 on:
   push:
@@ -10,17 +10,25 @@ permissions:
   contents: write
 
 jobs:
-  manifest:
+  photos:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: node scripts/generate-photos-manifest.js
-      - name: Commit manifest if changed
+      - name: Compress oversized photos
         run: |
-          if ! git diff --quiet Photos/manifest.json; then
+          # Shrink any photo over 700KB to max 1800px on the long edge.
+          # Already-compressed photos fall under the threshold and are skipped,
+          # so this only ever touches newly added originals.
+          find Photos -type f -size +700k \
+            \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+            -exec mogrify -auto-orient -resize '1800x1800>' -quality 82 {} +
+      - run: node scripts/generate-photos-manifest.js
+      - name: Commit changes if any
+        run: |
+          if ! git diff --quiet Photos/; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add Photos/manifest.json
-            git commit -m "Regenerate photos manifest"
+            git add Photos/
+            git commit -m "Optimize photos and regenerate manifest"
             git push
           fi

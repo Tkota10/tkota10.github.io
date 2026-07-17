@@ -41,6 +41,7 @@
       if (overCard) cursorEmoji = null;
       if (overInteractive) cursorEmoji = "🕳️";
       if (overArticleClose) cursorEmoji = null;
+      if (event.target.closest(".lightbox")) cursorEmoji = null;
       var showCursor = Boolean(cursorEmoji);
 
       bunny.classList.toggle("visible", showCursor);
@@ -105,10 +106,15 @@
   var posts = window.POSTS || [];
 
   function blockText(block) {
-    if (typeof block === "string") return block;
-    if (!block || typeof block !== "object") return "";
-    if (Array.isArray(block.items)) return block.items.join(" ");
-    return block.text || "";
+    var raw = "";
+    if (typeof block === "string") {
+      raw = block;
+    } else if (block && typeof block === "object") {
+      if (Array.isArray(block.items)) raw = block.items.join(" ");
+      else if (Array.isArray(block.text)) raw = block.text.join(" ");
+      else raw = block.text || block.caption || "";
+    }
+    return raw.replace(/<[^>]+>/g, " ");
   }
 
   function postText(post) {
@@ -136,29 +142,73 @@
     return node;
   }
 
+  // Like el(), but the content is trusted HTML from posts.js (inline
+  // formatting: <strong>, <em>, <a>, <sup>, <code>, <br>).
+  function elHTML(tag, className, html) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (html) node.innerHTML = html;
+    return node;
+  }
+
   function appendArticleBlock(container, block) {
     if (typeof block === "string") {
-      container.appendChild(el("p", null, block));
+      container.appendChild(elHTML("p", null, block));
       return;
     }
 
     if (!block || typeof block !== "object") return;
 
     if (block.type === "heading") {
-      container.appendChild(el("h2", "article-section-title", block.text));
+      container.appendChild(elHTML("h2", "article-section-title", block.text));
       return;
     }
 
     if (block.type === "list" && Array.isArray(block.items)) {
-      var list = el("ul", "article-list");
+      var list = elHTML(block.ordered ? "ol" : "ul", "article-list");
       block.items.forEach(function (item) {
-        list.appendChild(el("li", null, item));
+        list.appendChild(elHTML("li", null, item));
       });
       container.appendChild(list);
       return;
     }
 
-    container.appendChild(el("p", null, block.text || ""));
+    if (block.type === "quote") {
+      var quote = el("blockquote", "article-quote");
+      var texts = Array.isArray(block.text) ? block.text : [block.text];
+      texts.forEach(function (t) {
+        quote.appendChild(elHTML("p", null, t));
+      });
+      container.appendChild(quote);
+      return;
+    }
+
+    if (block.type === "image") {
+      var figure = el("figure", "article-figure");
+      var img = document.createElement("img");
+      img.src = block.src;
+      img.alt = block.alt || "";
+      img.loading = "lazy";
+      figure.appendChild(img);
+      if (block.caption) {
+        figure.appendChild(elHTML("figcaption", null, block.caption));
+      }
+      container.appendChild(figure);
+      return;
+    }
+
+    if (block.type === "footnotes" && Array.isArray(block.items)) {
+      var wrap = el("aside", "article-footnotes");
+      var notes = document.createElement("ol");
+      block.items.forEach(function (item) {
+        notes.appendChild(elHTML("li", null, item));
+      });
+      wrap.appendChild(notes);
+      container.appendChild(wrap);
+      return;
+    }
+
+    container.appendChild(elHTML("p", null, block.text || ""));
   }
 
   function renderList() {
@@ -240,12 +290,94 @@
     });
 
   document.addEventListener("keydown", function (event) {
+    if (lightbox && !lightbox.hidden) {
+      if (event.key === "Escape") closeLightbox();
+      if (event.key === "ArrowLeft") stepLightbox(-1);
+      if (event.key === "ArrowRight") stepLightbox(1);
+      return;
+    }
     if (event.key === "Escape") closeArticle(false);
   });
 
   /* ---------------- photos ---------------- */
 
   var photosLoaded = false;
+  var photoFiles = [];
+  var lightbox = null;
+  var lightboxImg = null;
+  var lightboxIndex = 0;
+
+  function ensureLightbox() {
+    if (lightbox) return;
+    lightbox = el("div", "lightbox");
+    lightbox.hidden = true;
+    lightboxImg = document.createElement("img");
+    lightbox.appendChild(lightboxImg);
+
+    // Tap/click closes, but a horizontal swipe steps between photos
+    // instead (the swipe's trailing click must not close the lightbox).
+    var touchStartX = 0;
+    var touchStartY = 0;
+    var swiped = false;
+
+    lightbox.addEventListener(
+      "touchstart",
+      function (event) {
+        swiped = false;
+        touchStartX = event.touches[0].clientX;
+        touchStartY = event.touches[0].clientY;
+      },
+      { passive: true }
+    );
+
+    lightbox.addEventListener(
+      "touchend",
+      function (event) {
+        var dx = event.changedTouches[0].clientX - touchStartX;
+        var dy = event.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) {
+          swiped = true;
+          stepLightbox(dx < 0 ? 1 : -1);
+        }
+      },
+      { passive: true }
+    );
+
+    lightbox.addEventListener("click", function () {
+      if (swiped) {
+        swiped = false;
+        return;
+      }
+      closeLightbox();
+    });
+
+    document.body.appendChild(lightbox);
+  }
+
+  function showLightboxPhoto(index) {
+    lightboxIndex = index;
+    var file = photoFiles[index];
+    lightboxImg.src = "Photos/" + file;
+    lightboxImg.alt = file.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ");
+  }
+
+  function openLightbox(index) {
+    ensureLightbox();
+    showLightboxPhoto(index);
+    lightbox.hidden = false;
+    document.body.classList.add("lightbox-open");
+  }
+
+  function closeLightbox() {
+    if (!lightbox || lightbox.hidden) return;
+    lightbox.hidden = true;
+    document.body.classList.remove("lightbox-open");
+  }
+
+  function stepLightbox(delta) {
+    var next = (lightboxIndex + delta + photoFiles.length) % photoFiles.length;
+    showLightboxPhoto(next);
+  }
 
   function loadPhotos() {
     if (photosLoaded) return;
@@ -257,11 +389,15 @@
       })
       .then(function (files) {
         if (!files.length) throw new Error("no photos");
-        files.forEach(function (file) {
+        photoFiles = files;
+        files.forEach(function (file, index) {
           var img = document.createElement("img");
           img.src = "Photos/" + file;
           img.alt = file.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ");
           img.loading = "lazy";
+          img.addEventListener("click", function () {
+            openLightbox(index);
+          });
           photoGrid.appendChild(img);
         });
       })
